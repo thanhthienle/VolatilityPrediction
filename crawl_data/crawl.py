@@ -16,7 +16,8 @@ def format_num(num):
     return "0" + num
   return num
 
-stock = [["VNINDEX", 202], ["VN30INDEX", 135] ]
+# stock = [ ["VN30INDEX", 135], ["VNINDEX", 122]]
+stock = [["VNINDEX", 182]]
 data = []
 
 # for page in range (2, 134)
@@ -41,22 +42,19 @@ for st in range(2):
       row_data["volume"] = price_index[1].text
       row_data["value"] = price_index[2].text
       data.append(row_data)
-      time.sleep(1)
-    print(f" Next to Page {page}")
     els = driver.find_element('xpath', f'//a[@title=" Next to Page {page}"]')
-    time.sleep(1)
     els.click()
-    time.sleep(1)
-    if (page - 1) % 40 == 0:
+    time.sleep(2)
+    if (page - 1) % 30 == 0:
       print(len(data))
       data_string = json.dumps(data, sort_keys=True, indent=4) 
-      myjsonfile = open(f"vn30_index{page - 1}.json", "w")
+      myjsonfile = open(f"{stock[st][0]}{page - 1}.json", "w")
       myjsonfile.write(data_string)
       myjsonfile.close()
 
-print(len(data))
-data_string = json.dumps(data, sort_keys=True, indent=4) 
-myjsonfile = open("vn30_index.json", "w")
-myjsonfile.write(data_string)
-myjsonfile.close()
+  print(len(data))
+  data_string = json.dumps(data, sort_keys=True, indent=4) 
+  myjsonfile = open(f"{stock[st][0]}.json", "w")
+  myjsonfile.write(data_string)
+  myjsonfile.close()
 
