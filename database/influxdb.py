@@ -2,19 +2,6 @@ from influxdb import InfluxDBClient
 from config import InfluxDBConfig
 
 from datetime import datetime
-
-def network(name):
-  if "bsc" in name:
-    return "bsc"
-  elif "eth" in name:
-    return "eth"
-  elif "polygon" in name:
-    return "polygon"
-  elif "ftm" in name:
-    return "ftm"
-  else:
-    return ""
-
 class InfluxDB:
   def __init__(self):
     self.client =InfluxDBClient(host=InfluxDBConfig.HOST, port=InfluxDBConfig.PORT, username=InfluxDBConfig.USERNAME, password=InfluxDBConfig.PASSWORD)
@@ -22,10 +9,8 @@ class InfluxDB:
 
   def insert_data(self, doc, measurement):
     try:
-      # time = list(doc['count'])[-1]
       insert_data = [{
         "measurement": measurement,
-        # "time": timestampToDatetime(time),
         "time": doc['date'],
         "tags":
         {
@@ -36,13 +21,32 @@ class InfluxDB:
           "high": doc['high'],
           "low": doc['low'],
           "value": doc['value'],
-          "volumn": doc['volumn']
+          "volume": doc['volume'],
+          "vola": doc['realized_vol']
         }
       }]
       self.client.write_points(insert_data)
     except Exception as ex:
       print(ex)
     return None
+  
+  def insert_data_pred(self, doc, measurement):
+    try:
+      insert_data = [{
+        "measurement": measurement,
+        "time": doc['date'],
+        "tags":
+        {
+        },
+        "fields": {
+          "vola": doc['vola']
+        }
+      }]
+      self.client.write_points(insert_data)
+    except Exception as ex:
+      print(ex)
+    return None
+    
 
   def query_data(self, measurement):
     try:
@@ -53,3 +57,4 @@ class InfluxDB:
     except Exception as ex:
       print(ex)
     return None
+  

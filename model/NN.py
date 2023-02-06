@@ -15,47 +15,32 @@ from sklearn.svm import SVR
 from scipy.stats import uniform as sp_rand
 from sklearn.model_selection import RandomizedSearchCV
 import random
-from sklearn.neural_network import MLPRegressor
+from sklearn.neural_network import MLPRegressor\
 
-svr_poly = SVR(kernel='poly', degree=2)
-svr_lin = SVR(kernel='linear')
-svr_rbf = SVR(kernel='rbf')
+# Function for model selection
+def MLP_modelSelect(learning_rate=0.001):
+    NN_vol = MLPRegressor(learning_rate_init=learning_rate, random_state=1)
+    para_grid_NN = {
+        'hidden_layer_sizes': [(100, 50), (50, 50), (10, 100)],
+        'max_iter': [500, 1000],
+        'alpha': [0.00005, 0.0005]}
+    return RandomizedSearchCV(NN_vol, para_grid_NN)
 
-svr = {
-    'poly': svr_poly,
-    'lin': svr_lin,
-    'rbf': svr_rbf
-}
-
-svr_namelookup = {
-    'poly': 'Polynomial',
-    'lin': 'Linear',
-    'rbf': 'RBF'
-}
-
-def SVR_modelSelect(kernel: str):
-    para_grid = {'gamma': sp_rand(),
-                 'C': sp_rand(),
-                 'epsilon': sp_rand()}
-    return RandomizedSearchCV(svr[kernel], para_grid)
-
-class SVRservice:
+class MLPservice:
     
-    def __init__(self, data: pd.DataFrame, kernel: str, pretrained_model=None):
-        
+    def __init__(self, data, learning_rate=0.001, pretrained_model=None):
         self.date = data['date']
         self.realized_vol = data['realized_vol']
         square_ret = self.realized_vol ** 2
         self.X = pd.concat([square_ret, self.realized_vol], axis=1, ignore_index=True).reset_index(drop=True)
-        self.kernel = kernel
+        self.lr = learning_rate
         if pretrained_model:
             self.model = pretrained_model
         else:
-            self.model = SVR_modelSelect(kernel=kernel)
+            self.model = MLP_modelSelect(learning_rate)
         self.num_test = None
         
     def train(self, num_test):
-        
         # Change service num_test for testing later
         self.num_test = num_test
         test_start = len(self.date) - num_test
@@ -66,41 +51,34 @@ class SVRservice:
         
         # Select and train model
         self.model.fit(x_train, y_train)
-        
+    
     def test(self, num_test, printres=False, plotres=False, prev=0):
-        
         # Data
         test_start = len(self.date) - num_test
         x_test = self.X[test_start-1:-1]
         y_test = self.realized_vol[test_start:]
         
         # Predict on test set and calculate RMSE
-        pred_svr = self.model.predict(x_test)
-        rmse_svr = np.sqrt(mse(y_test / 100, pred_svr / 100))
+        pred_mlp = self.model.predict(x_test)
+        rmse_mlp = np.sqrt(mse(y_test / 100, pred_mlp / 100))
         
         if printres:
-            print('The RMSE value of SVR with {} Kernel is {:.4f}' .format(svr_namelookup[self.kernel], rmse_svr))
+            print('The RMSE value of MLP is {:.4f}' .format(rmse_mlp))
             
         # Predicted DataFrame
         pred_date = self.date[test_start:]
         pred_dict = {
             'date': pred_date,
-            'vola': pred_svr
+            'vola': pred_mlp
         }
         pred = pd.DataFrame(pred_dict)
         
         if plotres:
             plt.figure(figsize=(20, 6))
             plt.plot(self.date[-(prev+num_test):], self.realized_vol[-(prev+num_test):] / 100, label='Realized Volatility')
-            plt.plot(pred['date'], pred['vola'] / 100, label='Volatility Prediction-SVR-GARCH', alpha=0.75)
-            plt.title(f'Volatility Prediction with SVR-GARCH ({svr_namelookup[self.kernel]})', fontsize=12)
+            plt.plot(pred['date'], pred['vola'] / 100, label='Volatility Prediction-MLP', alpha=0.75)
+            plt.title(f'Volatility Prediction with MLP', fontsize=12)
             plt.legend()
             plt.show()
             
-        return pred_svr, rmse_svr
-        
-    
-
-# SVR_service_lin = SVRservice(df, 'lin')
-# SVR_service_poly = SVRservice(df, 'poly')
-# SVR_service_rbf = SVRservice(df, 'rbf')
+        return pred_mlp, rmse_mlp

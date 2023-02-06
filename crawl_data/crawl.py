@@ -17,7 +17,7 @@ def format_num(num):
   return num
 
 # stock = [ ["VN30INDEX", 135], ["VNINDEX", 122]]
-stock = ["PNJ", "SBT", "VSH", "KDH", "DIG", "HVG", "GMD"]
+stock = ["KDH", "DIG", "HVG", "GMD"]
 # for page in range (2, 134)
 for st in stock:
   data = []

@@ -19,20 +19,51 @@ from sklearn.neural_network import MLPRegressor
 filterwarnings('ignore')
 
 def convertToDate(x: str):
-  return datetime.strptime(x, "%d/%m/%Y")
+    if isinstance(x, str):
+      return datetime.strptime(x, '%d/%m/%Y')
+    return x
 
 def toFloat(x: str):
-  return float("".join(x.split('.')))
+    if isinstance(x, str):
+      return float("".join(x.split(',')))
+    return x
 
 def toInt(x: str):
-  return int("".join(x.split(',')))
+    if isinstance(x, str):
+      return int("".join(x.split(',')))
+    return x
+
+def classic_forecast(df: pd.DataFrame, horizon: int, model, plotres=False):
+    # Forecast
+    forecast_arch = model.forecast(horizon=horizon)
+    
+    # Build forecast dataframe
+    latest_date = df['date'].iloc[-1]
+    forecast_date = [latest_date + i*BusinessDay() for i in range(1, horizon+1)] # Python list to store the next n_forecast trading dates
+    forecast_vola = forecast_arch.variance.iloc[-1].values
+    
+    forecast_dict = {
+        'date': forecast_date,
+        'vola': forecast_vola,
+    }
+    forecast = pd.DataFrame(forecast_dict)
+    
+    # Draw
+    if plotres:
+        plt.figure(figsize=(20, 6))
+        plt.plot(df['date'].iloc[-100:], df['realized_vol'][-100:] / 100, label='Realized Volatility')
+        plt.plot(forecast['date'], forecast['vola'] / 100, label='Volatility Prediction-ARCH')
+        plt.title('Volatility Forecasting with ARCH', fontsize=12)
+        plt.legend()
+        plt.show()
+    
+    return forecast
 
 def normalize_data(code):
   df = pd.read_json('./data/{}.json'.format(code), convert_dates=False)
-  df[df.date.isin(df.date[df.date.duplicated()])].sort_values("date")
-  df = df.drop_duplicates().reset_index().drop(labels='index', axis=1)
+  df = df.drop_duplicates().reset_index(drop=True)
   df.date = df.date.apply(convertToDate)
-  df = df.sort_values(by='date').reset_index().drop(labels=['index'], axis=1)
+  df = df.sort_values(by='date').reset_index(drop=True)
   for column in ['close', 'high', 'open', 'low']:
     df[column] = df[column].apply(toFloat)
   for column in ['value', 'volume']:
@@ -40,7 +71,6 @@ def normalize_data(code):
   df['return'] = df.close.pct_change().apply(lambda x: x*100)
   df['return'][0] = 0
   df['realized_vol'] = df['return'].rolling(5).std()
-  df.head()
   return df
 
 def ARCH_modelSelect(ret):
