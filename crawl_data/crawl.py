@@ -17,44 +17,50 @@ def format_num(num):
   return num
 
 # stock = [ ["VN30INDEX", 135], ["VNINDEX", 122]]
-stock = [["VNINDEX", 182]]
-data = []
-
+stock = ["PNJ", "SBT", "VSH", "KDH", "DIG", "HVG", "GMD"]
 # for page in range (2, 134)
-for st in range(2):
-  driver.get(f"https://s.cafef.vn/Lich-su-giao-dich-{stock[st][0]}-1.chn")
-  time.sleep(2)
-  for page in range (2, stock[st][1]):
-    for i in range (1, 21):
+for st in stock:
+  data = []
+  driver.get(f"https://s.cafef.vn/Lich-su-giao-dich-{st}-1.chn")
+  time.sleep(1)
+  for page in range (2, 121):
+    for i in range (0, 20):
       row_num = format_num(i)
+      sign = ""
       if(i%2 == 0):
-        row_num += "_altitemTR"
+        sign += "itemTR"
       else:
-        row_num += "_itemTR"
-      els = driver.find_element('id', f'ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl{row_num}')
+        sign += "altitemTR"
+      # els = driver.find_element('id', f'ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl{row_num}')
+      els = driver.find_element('id', f'ContentPlaceHolder1_ctl03_rptData2_{sign}_{i}')
       row_data = {}
       row_data["date"] = els.find_element("class name", "Item_DateItem").text
       price_index = els.find_elements("class name", "Item_Price10")
-      row_data["open"] = price_index[4].text
-      row_data["high"] = price_index[5].text
-      row_data["low"] = price_index[6].text
-      row_data["close"] = price_index[0].text
-      row_data["volume"] = price_index[1].text
-      row_data["value"] = price_index[2].text
+      row_data["open"] = price_index[5].text
+      row_data["high"] = price_index[6].text
+      row_data["low"] = price_index[7].text
+      row_data["close"] = price_index[1].text
+      row_data["volume"] = price_index[2].text
+      row_data["value"] = price_index[3].text
       data.append(row_data)
     els = driver.find_element('xpath', f'//a[@title=" Next to Page {page}"]')
     els.click()
     time.sleep(2)
-    if (page - 1) % 30 == 0:
-      print(len(data))
-      data_string = json.dumps(data, sort_keys=True, indent=4) 
-      myjsonfile = open(f"{stock[st][0]}{page - 1}.json", "w")
-      myjsonfile.write(data_string)
-      myjsonfile.close()
-
-  print(len(data))
+    # if (page - 1) % 30 == 0:
+    #   print(len(data))
+    #   data_string = json.dumps(data, sort_keys=True, indent=4) 
+    #   myjsonfile = open(f"{st[0]}{page - 1}.json", "w")
+    #   myjsonfile.write(data_string)
+    #   myjsonfile.close()
   data_string = json.dumps(data, sort_keys=True, indent=4) 
-  myjsonfile = open(f"{stock[st][0]}.json", "w")
+  myjsonfile = open(f"{st}.json", "w")
   myjsonfile.write(data_string)
   myjsonfile.close()
+  print(st)
+
+  # print(len(data))
+  # data_string = json.dumps(data, sort_keys=True, indent=4) 
+  # myjsonfile = open(f"{stock[st][0]}.json", "w")
+  # myjsonfile.write(data_string)
+  # myjsonfile.close()
 
