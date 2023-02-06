@@ -6,7 +6,7 @@ import { Box, Container, Paper, BottomNavigation, BottomNavigationAction, Typogr
 import Highcharts from 'highcharts'
 
 function timeConverter(UNIX_timestamp){
-  var a = new Date(UNIX_timestamp * 1000);
+  var a = new Date(UNIX_timestamp);
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var year = a.getFullYear();
   var month = months[a.getMonth()];
@@ -44,6 +44,19 @@ const Detail = () => {
         setData(
           newData
         )
+        let curInformation = []
+        for (let i = 0; i < 10; i++) {
+          let newInformation = [
+            Date.parse(data['time'][i]),
+            data['open'][i],
+            data['high'][i],
+            data['low'][i],
+            data['close'][i],
+          ]
+          curInformation.push(newInformation)
+        }
+        console.log(information)
+        setInformation(curInformation)
       })
 
       fetch(`http://127.0.0.1:5000/${method}/${id}`)
@@ -130,8 +143,8 @@ const Detail = () => {
 
   return (
     <div>
-      <Box sx={{ minWidth: 120 }}>
-        <FormControl fullWidth>
+      <Box sx={{ padding: "10px", minWidth: 120, display: "flex"}}>
+        <FormControl sx={{width: "200px"}}>
           <InputLabel id="demo-simple-select-label">Method</InputLabel>
           <Select
             labelId="demo-simple-select-label"
@@ -147,9 +160,39 @@ const Detail = () => {
             <MenuItem value='svr_rbf'>EVR Rbf</MenuItem>
             <MenuItem value='mlp'>MLP</MenuItem>
           </Select>
-        </FormControl>
+        </FormControl> 
       </Box>
       <HighchartsReact highcharts={Highcharts} options={options} />
+      <Paper elevation={3} sx={{width: "100%", height: "200px", marginTop: "60px"}}>
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Time</TableCell>
+                  <TableCell align="right">Open</TableCell>
+                  <TableCell align="right">High</TableCell>
+                  <TableCell align="right">Low</TableCell>
+                  <TableCell align="right">Close</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {information.map((row) => (
+                  <TableRow
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row" sx={{fontSize: "12px", fontWeight: 600}}>
+                      {timeConverter(row[0])}
+                    </TableCell>
+                    <TableCell align="right" sx={{fontSize: "12px"}}>{row[1]}</TableCell>
+                    <TableCell align="right" sx={{fontSize: "12px"}}>{row[2]}</TableCell>
+                    <TableCell align="right" sx={{fontSize: "12px"}}>{row[3]}</TableCell>
+                    <TableCell align="right" sx={{fontSize: "12px"}}>{row[4]}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
     </div>
   )
 }
